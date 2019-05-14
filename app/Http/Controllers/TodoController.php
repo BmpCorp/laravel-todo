@@ -7,16 +7,19 @@ use Dotenv\Exception\ValidationException;
 use http\Env\Response;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use stdClass;
 
 class TodoController extends Controller
 {
-    private function getAllTodos()
-    {
-        $todos = Todo::all([
-            'id', 'name', 'completed'
-        ]);
+    private function makeResponse($status = 200, $statusMessage = null) {
+        $response = new StdClass();
+        $response->todos = Todo::all(['id', 'name', 'completed'])->toArray();
 
-        return new \Illuminate\Http\Response($todos->jsonSerialize(), 200, [
+        if ($statusMessage !== null) {
+            $response->status = $statusMessage;
+        }
+
+        return new \Illuminate\Http\Response(json_encode($response), $status, [
             'Content-Type' => 'application/json'
         ]);
     }
@@ -28,7 +31,7 @@ class TodoController extends Controller
      */
     public function index()
     {
-        return $this->getAllTodos();
+        return $this->makeResponse();
     }
 
     /**
@@ -45,7 +48,7 @@ class TodoController extends Controller
                 'completed' => 'nullable|boolean',
             ]);
         } catch (\Illuminate\Validation\ValidationException $exception) {
-            return new \Illuminate\Http\Response('wrong parameters', 400);
+            return $this->makeResponse(400, 'wrong parameters');
         }
 
         $todo = new Todo();
@@ -53,7 +56,7 @@ class TodoController extends Controller
         $todo->completed = $request->get('completed') === '1';
         $todo->save();
 
-        return $this->getAllTodos();
+        return $this->makeResponse(200, 'ok');
     }
 
     /**
@@ -71,12 +74,12 @@ class TodoController extends Controller
                 'completed' => 'nullable|boolean',
             ]);
         } catch (\Illuminate\Validation\ValidationException $exception) {
-            return new \Illuminate\Http\Response('wrong parameters', 400);
+            return $this->makeResponse(400, 'wrong parameters');
         }
 
         $todo = Todo::find(intval($request->get('id')));
         if (!$todo) {
-            return new \Illuminate\Http\Response('no such record', 404);
+            return $this->makeResponse(404, 'no such record');
         }
 
         $fields = [];
@@ -89,7 +92,7 @@ class TodoController extends Controller
 
         $todo->update($fields);
 
-        return $this->getAllTodos();
+        return $this->makeResponse(200, 'ok');
     }
 
     /**
@@ -105,20 +108,20 @@ class TodoController extends Controller
                 'id' => 'required|integer',
             ]);
         } catch (\Illuminate\Validation\ValidationException $exception) {
-            return new \Illuminate\Http\Response('wrong parameters', 400);
+            return $this->makeResponse(400, 'wrong parameters');
         }
 
         $todo = Todo::find(intval($request->get('id')));
         if (!$todo) {
-            return new \Illuminate\Http\Response('no such record', 404);
+            return $this->makeResponse(404, 'no such record');
         }
 
         try {
             $todo->delete();
         } catch (\Exception $exception) {
-            return new \Illuminate\Http\Response("can't delete todo $todo->id", 400);
+            return $this->makeResponse(400, "can't delete todo $todo->id");
         }
 
-        return $this->getAllTodos();
+        return $this->makeResponse(200, 'ok');
     }
 }
