@@ -11,12 +11,18 @@ use stdClass;
 
 class TodoController extends Controller
 {
-    private function makeResponse($status = 200, $statusMessage = null) {
+    private function makeResponse(int $status = 200, string $statusMessage = null, array $otherParams = null) {
         $response = new StdClass();
         $response->todos = Todo::all(['id', 'name', 'completed'])->toArray();
 
         if ($statusMessage !== null) {
             $response->status = $statusMessage;
+        }
+
+        if ($otherParams !== null) {
+            foreach ($otherParams as $key => $value) {
+                $response->{$key} = $value;
+            }
         }
 
         return new \Illuminate\Http\Response(json_encode($response), $status, [
@@ -56,7 +62,7 @@ class TodoController extends Controller
         $todo->completed = $request->get('completed') === '1';
         $todo->save();
 
-        return $this->makeResponse(200, 'ok');
+        return $this->makeResponse(200, 'ok', ['id' => $todo->id]);
     }
 
     /**
