@@ -60,23 +60,29 @@ class TodoController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Todo  $todo
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Todo $todo)
+    public function update(Request $request)
     {
         try {
             $this->validate($request, [
-                'name' => 'required|max:255',
+                'id' => 'required|integer',
+                'name' => 'nullable|min:1|max:255',
                 'completed' => 'nullable|boolean',
             ]);
         } catch (\Illuminate\Validation\ValidationException $exception) {
             return new \Illuminate\Http\Response('wrong parameters', 400);
         }
 
-        $fields = [
-            'name' => $request->get('name'),
-        ];
+        $todo = Todo::find(intval($request->get('id')));
+        if (!$todo) {
+            return new \Illuminate\Http\Response('no such record', 404);
+        }
+
+        $fields = [];
+        if ($request->get('name') !== null) {
+            $fields['name'] = $request->get('name');
+        }
         if ($request->get('completed') !== null) {
             $fields['completed'] = ($request->get('completed') === '1');
         }
@@ -89,11 +95,24 @@ class TodoController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Todo  $todo
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Todo $todo)
+    public function destroy(Request $request)
     {
+        try {
+            $this->validate($request, [
+                'id' => 'required|integer',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            return new \Illuminate\Http\Response('wrong parameters', 400);
+        }
+
+        $todo = Todo::find(intval($request->get('id')));
+        if (!$todo) {
+            return new \Illuminate\Http\Response('no such record', 404);
+        }
+
         try {
             $todo->delete();
         } catch (\Exception $exception) {

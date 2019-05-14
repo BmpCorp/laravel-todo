@@ -20,5 +20,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::prefix('todo')->group(function() {
     Route::get('/', 'TodoController@index');
+    Route::post('/', 'TodoController@update');
+
     Route::post('/add', 'TodoController@store');
+    Route::post('/remove', 'TodoController@destroy');
 });
