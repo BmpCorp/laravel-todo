@@ -18,7 +18,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::prefix('todo')->group(function() {
+Route::middleware('cors')->prefix('todo')->group(function() {
     Route::get('/', 'TodoController@index');
     Route::post('/', 'TodoController@update');
 
